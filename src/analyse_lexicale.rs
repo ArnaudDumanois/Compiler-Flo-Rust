@@ -1,55 +1,74 @@
 /*
 Analyseur lexical du langage Flo
  */
-use std::str::CharIndices;
-use std::iter::Peekable;
 
-// on va declarer tout les tokens de notre langage ici
-#[derive(Debug, PartialEq)]
+use regex::Regex;
+
 pub enum Token {
-    // Types
-    entier,
-    booleen,
+    // Identificateur et Entier
+    Ident(String),
+    Entier(i32),
 
-    // Operateurs
+    // opérateurs
     Plus,
     Moins,
-    Multiplier,
-    Diviser,
-    Modulo,
-    Egal,
-    Different,
-    Superieur,
-    SuperieurEgal,
-    Inferieur,
-    InferieurEgal,
-    Et,
-    Ou,
-    Non,
+    Mult,
+    Div,
+}
 
-    // Mots clés
-    Ecrire,
-    Lire,
-    Retourner,
-    Si,
-    Sinon,
-    SinonSi,
-    Tantque,
-    Vrai,
-    Faux,
+pub fn lexer(input: &str) -> Vec<Token> {
 
-    // Ponctuation
-    ParentheseOuvrante,
-    ParentheseFermante,
-    AccoladeOuvrante,
-    AccoladeFermante,
-    PointVirgule,
-    Virgule,
+    let mut tokens = vec![];
+    let regex_ident = Regex::new(r"^[a-zA-Z][a-zA-Z0-9]*$").unwrap();
+    let regex_entier = Regex::new(r"^[0-9]+$").unwrap();
+    let operateur = ['+', '-', '*', '/'];
+    let regex_space = Regex::new(r"^\s+$").unwrap();
 
-    // Identifiant et valeur
-    Identifiant(String),
-    ValeurEntier(i32),
-    ValeurBooleen(bool),
-    EndOfFile,
+    let mut remaining_input = input;
+    while !remaining_input.is_empty() {
+        // ignorer les espaces
+        /*
+        if let Some(c) = remaining_input.chars().next() {
+            if c.is_whitespace() {
+                remaining_input = remaining_input.trim_start();
+                continue;
+            }
+        }
+         */
+        if let Some(captures) = regex_space.captures(remaining_input) {
+            remaining_input = &remaining_input[captures.get(0).unwrap().end()..];
+            continue;
+        }
+
+        if let Some(captures) = regex_ident.captures(remaining_input) {
+            let ident = captures.get(0).unwrap().as_str();
+            tokens.push(Token::Ident(ident.to_string()));
+            remaining_input = &remaining_input[captures.get(0).unwrap().end()..];
+            continue;
+        }
+
+        if let Some(captures) = regex_entier.captures(remaining_input) {
+            let entier = captures.get(0).unwrap().as_str();
+            tokens.push(Token::Entier(entier.parse::<i32>().unwrap()));
+            remaining_input = &remaining_input[captures.get(0).unwrap().end()..];
+            continue;
+        }
+
+        // on vérifie si le caractère est un opérateur
+        if operateur.contains(&remaining_input.chars().next().unwrap()) {
+            match remaining_input.chars().next().unwrap() {
+                '+' => tokens.push(Token::Plus),
+                '-' => tokens.push(Token::Moins),
+                '*' => tokens.push(Token::Mult),
+                '/' => tokens.push(Token::Div),
+                _ => panic!("Unexpected character: {}", remaining_input.chars().next().unwrap()),
+            }
+            remaining_input = &remaining_input[1..];
+            continue;
+        }
+
+        panic!("Unexpected character: {}", remaining_input.chars().next().unwrap());
+    }
+    tokens
 }
 

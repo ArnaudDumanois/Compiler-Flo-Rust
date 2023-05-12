@@ -1,3 +1,5 @@
+extern crate core;
+
 mod analyse_lexicale;
 mod analyse_syntaxique;
 mod arbre_abstrait;
@@ -6,7 +8,7 @@ mod generation_code;
 
 fn main() {
 
-    let input = "1 + 1";
+    let input = "Vrai + 3;";
     let tokens = analyse_lexicale::lexer(input);
     println!("Tokens: {:?}", tokens);
 
